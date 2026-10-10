@@ -15,13 +15,14 @@
 | **Relational Tables (3NF)** | **13** | `Role`, `AppUser`, `Customer`, `Product`, `Inventory`, `Orders`, `OrderItem`, `Payment`, `ReturnRequest`, `ReturnItem`, `Inspection`, `Refund`, `AuditLog` ([schema.sql](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/db/schema.sql)) |
 | **Database Triggers** | **5** | Return window validation, Return quantity validation, Invalid state transition check (FIX 01), Return audit log, Refund audit log ([triggers.sql](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/db/triggers.sql)) |
 | **Stored Procedures** | **1** | `sp_process_refund`: Atomic transaction with exit handler rollback (FIX 03) and duplicate refund prevention (FIX 02) ([procedures.sql](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/db/procedures.sql)) |
-| **REST API Endpoints** | **17** | Auth, Orders, Returns, Approval, Receiving, Inspection, Refunds, Audit, Analytics, System Inventory ([main.py](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/backend/main.py)) |
+| **REST API Endpoints** | **17** | Auth, Orders, Returns, Approval, Receiving, Inspection, Refunds, Audit, Analytics, System Inventory — retained as automated test/benchmark harness ([main.py](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/backend/main.py)) |
+| **Streamlit App Pages** | **6** | Sidebar login + session-state RBAC; Customer Portal; Operations; Refunds; Analytics; Audit Log (Admin); Lifecycle Demo stepper (`streamlit_app/app.py` + `streamlit_app/db_ops.py` with direct parameterized SQL) |
 
 ---
 
 ## 2. Automated Test Suite Results
 
-The system was evaluated against 9 automated test cases covering constraints, unit procedure logic, full integration API flow, error rollback, and concurrent execution.
+The system was evaluated against 13 automated test cases (9 API + 4 Streamlit ops) covering constraints, unit procedure logic, full integration API flow, Streamlit data-layer lifecycle, error rollback, and concurrent execution.
 
 | Category | Test Case | Result | Empirical Result & Verification Details |
 | :--- | :--- | :---: | :--- |
@@ -35,7 +36,7 @@ The system was evaluated against 9 automated test cases covering constraints, un
 | **Failure / Rollback** | `test_failure_rollback_on_procedure_error` | **PASSED** | SQLEXCEPTION handler triggered `ROLLBACK` on error; no orphan records created (FIX 03). |
 | **Concurrency** | `test_concurrency_duplicate_refund_attempts` | **PASSED** | Competing parallel threads; exactly 1 succeeded (200 OK) and 1 failed (400 Bad Request) (FIX 02). |
 
-**Overall Test Result:** 9 / 9 Passed (100% Pass Rate). See [test_report.md](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/docs/test_report.md).
+**Overall Test Result:** 13 / 13 Passed (100% Pass Rate). See [test_report.md](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/docs/test_report.md).
 
 ---
 

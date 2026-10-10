@@ -15,7 +15,13 @@ A complete B.Tech AI & ML Database Systems Capstone Project (3-Stage Review Read
 # 1. Initialize MySQL schema, triggers, procedures, indexes & demo seed data
 python db/seed.py
 
-# 2. Launch FastAPI Web Server (Backend + Frontend)
+# 2a. Launch Streamlit App (primary application UI)
+streamlit run streamlit_app/app.py --server.port 8501
+```
+Open your browser at: `http://127.0.0.1:8501`
+
+### Alternative: FastAPI Backend + Legacy Dashboard (test/benchmark harness)
+```bash
 python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 Open your browser at: `http://127.0.0.1:8000`
@@ -44,9 +50,9 @@ The system includes pre-seeded demo accounts for all 4 RBAC system roles (Passwo
 
 ### Execute Pytest Automated Test Suite
 ```bash
-python -m pytest tests/test_suite.py -v
+python -m pytest tests/test_suite.py tests/test_streamlit_ops.py -v
 ```
-*Runs 9 automated tests covering CHECK constraints, foreign key restrictions, stored procedure logic, full lifecycle integration, error rollback, and thread concurrency.*
+*Runs 13 automated tests (9 API: CHECK constraints, foreign key restrictions, stored procedure logic, full lifecycle integration, error rollback, and thread concurrency; + 4 Streamlit ops: auth/RBAC, db_ops lifecycle, guards, catalogue/analytics sanity).*
 
 ### Execute Performance & Disaster Recovery Benchmarks
 ```bash
@@ -68,7 +74,7 @@ python benchmarks/run_benchmarks.py
                                          ▼
 +-----------------------------------------------------------------------------------+
 |                                SERVICE LAYER                                      |
-|    FastAPI REST Backend   |   JWT Auth & RBAC   |   Mocked Payment Gateway        |
+|    Streamlit App (direct parameterized SQL) + FastAPI REST harness   |   Session/JWT Auth & RBAC   |   Mocked Payment Gateway        |
 +-----------------------------------------------------------------------------------+
                                          │
                                    Parameterized SQL

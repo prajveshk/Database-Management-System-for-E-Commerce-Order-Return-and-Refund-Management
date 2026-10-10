@@ -20,10 +20,16 @@
 | **Integration** | `test_integration_full_lifecycle` | **PASSED** | Verified API-to-DB full flow: Order -> Return -> Approve -> Receive -> Inspect -> Refund. |
 | **Failure/Rollback** | `test_failure_rollback_on_procedure_error` | **PASSED** | Verified SQLEXCEPTION exit handler rolls back all changes on invalid return ID (FIX 03). |
 | **Concurrency** | `test_concurrency_duplicate_refund_attempts` | **PASSED** | Parallel competing threads attempting duplicate refund; exactly 1 succeeded and 1 failed with duplicate refund error (FIX 02). |
+| **Streamlit Auth** | `test_streamlit_auth_and_rbac` (TC-10) | **PASSED** | `streamlit_app/db_ops.authenticate` resolves all 4 RBAC roles; wrong password rejected. |
+| **Streamlit Lifecycle** | `test_streamlit_full_lifecycle_via_db_ops` (TC-11) | **PASSED** | db_ops chain Order -> Requested -> Approved -> Received -> Inspected -> Refunded with audit entries. |
+| **Streamlit Guards** | `test_streamlit_guards_late_return_and_duplicate_refund` (TC-12) | **PASSED** | Late return (order 3) blocked by window trigger; second refund blocked as duplicate. |
+| **Streamlit Sanity** | `test_streamlit_catalog_and_analytics_queries` (TC-13) | **PASSED** | Catalogue and return-rate report return rows. |
+
+Run: `python -m pytest tests/test_suite.py tests/test_streamlit_ops.py -v` (requires MySQL on 3307 + FastAPI on 8000 for the API tests).
 
 ---
 
-**Total Executed:** 9  
-**Passed:** 9  
+**Total Executed:** 13  
+**Passed:** 13  
 **Failed:** 0  
 **Pass Rate:** 100%  
