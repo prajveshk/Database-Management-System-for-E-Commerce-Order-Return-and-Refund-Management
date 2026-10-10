@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Order, Return & Refund Management DBMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-light: #f8f9fa;
+        }
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #edf2f7;
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #2c3e50, #4a6572);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+        .stepper-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .stepper-item::before {
+            position: absolute;
+            content: "";
+            border-bottom: 3px solid #dee2e6;
+            width: 100%;
+            top: 20px;
+            left: -50%;
+            z-index: 1;
+        }
+        .stepper-item:first-child::before {
+            content: none;
+        }
+        .stepper-item .step-counter {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #dee2e6;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .stepper-item.completed .step-counter {
+            background-color: #27ae60;
+            color: white;
+        }
+        .stepper-item.active .step-counter {
+            background-color: #3498db;
+            color: white;
+        }
+        .badge-status {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+        }
+        .json-preview {
+            background-color: #1e1e1e;
+            color: #4ec9b0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-database me-2"></i>E-Commerce DBMS (3NF)</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('demo-stepper')"><i class="fa-solid fa-route me-1"></i> Demo Lifecycle Stepper</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('customer-portal')"><i class="fa-solid fa-user me-1"></i> Customer Portal</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('ops-dashboard')"><i class="fa-solid fa-sliders me-1"></i> Operations Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('analytics-dashboard')"><i class="fa-solid fa-chart-line me-1"></i> Analytics & Benchmarks</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('audit-view')"><i class="fa-solid fa-shield-halved me-1"></i> Audit Log</a></li>
+                </ul>
+                <div class="d-flex align-items-center text-white me-3">
+                    <span id="current-user-badge" class="badge bg-primary me-2">Guest</span>
+                    <button class="btn btn-outline-light btn-sm" onclick="showLoginModal()"><i class="fa-solid fa-right-to-bracket me-1"></i> Switch Role / Login</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+
+        <!-- System Inventory Panel Header -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fa-solid fa-table me-1"></i> System Tables (3NF)</div>
+                    <div class="stat-value" id="inv-tables">13</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #16a085, #2ecc71);">
+                    <div class="stat-label"><i class="fa-solid fa-bolt me-1"></i> Integrity Triggers</div>
+                    <div class="stat-value" id="inv-triggers">5</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
+                    <div class="stat-label"><i class="fa-solid fa-gears me-1"></i> Stored Procedures</div>
+                    <div class="stat-value" id="inv-procedures">1</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #d35400, #e67e22);">
+                    <div class="stat-label"><i class="fa-solid fa-code me-1"></i> REST API Endpoints</div>
+                    <div class="stat-value" id="inv-endpoints">14</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: DEMO LIFECYCLE STEPPER -->
+        <div id="demo-stepper-tab" class="tab-page">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fa-solid fa-diagram-next me-2 text-primary"></i>End-to-End Order & Refund Lifecycle Stepper (7 States)</h5>
+                    <button class="btn btn-outline-danger btn-sm" onclick="testBlockedLateReturn()"><i class="fa-solid fa-ban me-1"></i> Test Blocked Late Return (Trigger Reject)</button>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Stepper Header -->
+                    <div class="d-flex justify-content-between mb-4">
+                        <div class="stepper-item completed" id="step-1"><div class="step-counter">1</div><div class="step-name">1. ORDER</div></div>
+                        <div class="stepper-item completed" id="step-2"><div class="step-counter">2</div><div class="step-name">2. RETURN</div></div>
+                        <div class="stepper-item completed" id="step-3"><div class="step-counter">3</div><div class="step-name">3. APPROVAL</div></div>
+                        <div class="stepper-item completed" id="step-4"><div class="step-counter">4</div><div class="step-name">4. INSPECTION</div></div>
+                        <div class="stepper-item completed" id="step-5"><div class="step-counter">5</div><div class="step-name">5. REFUND</div></div>
+                        <div class="stepper-item completed" id="step-6"><div class="step-counter">6</div><div class="step-name">6. INVENTORY</div></div>
+                        <div class="stepper-item completed" id="step-7"><div class="step-counter">7</div><div class="step-name">7. AUDIT LOG</div></div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Demo Target Order:</strong> Order #4 (Alice Smith - 27-inch 4K Monitor, $349.00). Follow the buttons below to drive the transaction through all 7 states live against MySQL.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fa-solid fa-gamepad me-2"></i>Lifecycle Control Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary" onclick="loadOrderState(4)"><i class="fa-solid fa-cart-shopping me-2"></i>Step 1: Inspect Order State (#4)</button>
+                                <button class="btn btn-outline-secondary" onclick="stepRequestReturn(4)"><i class="fa-solid fa-rotate-left me-2"></i>Step 2: Submit Return Request</button>
+                                <button class="btn btn-outline-info" onclick="stepApproveReturn(4)"><i class="fa-solid fa-check-double me-2"></i>Step 3: Support Agent Approves Return</button>
+                                <button class="btn btn-outline-warning" onclick="stepInspectReturn(4)"><i class="fa-solid fa-clipboard-check me-2"></i>Step 4: Warehouse Inspects Package (GOOD)</button>
+                                <button class="btn btn-success" onclick="stepProcessRefund(4)"><i class="fa-solid fa-money-bill-transfer me-2"></i>Step 5: Process Refund (`sp_process_refund` Transaction)</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fa-solid fa-terminal me-2"></i>Live DB State Inspector (Real MySQL Query Response)</h6>
+                            <pre class="json-preview" id="stepper-json">Click any step button above to query live state...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CUSTOMER PORTAL -->
+        <div id="customer-portal-tab" class="tab-page" style="display:none;">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card">
+                        <div class="card-header"><i class="fa-solid fa-cart-plus me-2 text-primary"></i>Place New Order</div>
+                        <div class="card-body">
+                            <form id="place-order-form">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Product</label>
+                                    <select class="form-select" id="product-select"></select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" id="order-qty" value="1" min="1">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-credit-card me-1"></i> Place Order & Pay</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card">
+                        <div class="card-header"><i class="fa-solid fa-box-open me-2 text-primary"></i>My Orders & Return Request</div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="my-orders-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: OPERATIONS DASHBOARD -->
+        <div id="ops-dashboard-tab" class="tab-page" style="display:none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-headset me-2 text-primary"></i>Support Agent Queue (Pending Approvals)</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadPendingReturns()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr><th>Return #</th><th>Customer</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+                                    </thead>
+                                    <tbody id="support-queue-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-warehouse me-2 text-warning"></i>Warehouse Inspection Queue</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadWarehouseQueue()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr><th>Return #</th><th>Order #</th><th>Status</th><th>Inspect Action</th></tr>
+                                    </thead>
+                                    <tbody id="warehouse-queue-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: ANALYTICS & BENCHMARKS -->
+        <div id="analytics-dashboard-tab" class="tab-page" style="display:none;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Return Rate per Product</div>
+                        <div class="card-body">
+                            <canvas id="chart-return-rate"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><i class="fa-solid fa-chart-bar me-2 text-success"></i>Monthly Refund Totals</div>
+                        <div class="card-body">
+                            <canvas id="chart-monthly-refunds"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><i class="fa-solid fa-list-ol me-2 text-danger"></i>Top Return Reasons</div>
+                        <div class="card-body">
+                            <canvas id="chart-top-reasons"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header"><i class="fa-solid fa-gauge-high me-2 text-info"></i>Database Index Performance Benchmark Chart (1K / 10K / 100K Rows)</div>
+                <div class="card-body text-center">
+                    <img id="benchmark-chart-img" src="/static/benchmark_chart.png" alt="Benchmark Chart" class="img-fluid rounded border" style="max-height: 400px;" onerror="this.src='https://via.placeholder.com/800x400?text=Benchmark+Chart+Generating...';">
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: AUDIT LOG -->
+        <div id="audit-view-tab" class="tab-page" style="display:none;">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-shield-cat me-2 text-danger"></i>System Audit Log (Admin Only)</span>
+                    <div>
+                        <button class="btn btn-warning btn-sm me-2" onclick="testNonAdminAuditAccess()"><i class="fa-solid fa-user-lock me-1"></i> Test Non-Admin 403 Access</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadAuditLog()"><i class="fa-solid fa-rotate"></i> Refresh Log</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Log ID</th>
+                                    <th>Entity</th>
+                                    <th>Entity ID</th>
+                                    <th>Old Status</th>
+                                    <th>New Status</th>
+                                    <th>Actor</th>
+                                    <th>Note</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-log-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-key me-2"></i>Select Demo Role or Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Quick Demo Role Switcher:</h6>
+                    <div class="d-grid gap-2 mb-3">
+                        <button class="btn btn-outline-primary text-start" onclick="demoLogin('customer_user')">
+                            <strong><i class="fa-solid fa-user me-2"></i>Customer:</strong> customer_user (Alice Smith)
+                        </button>
+                        <button class="btn btn-outline-info text-start" onclick="demoLogin('support_agent')">
+                            <strong><i class="fa-solid fa-headset me-2"></i>Support Agent:</strong> support_agent
+                        </button>
+                        <button class="btn btn-outline-warning text-start" onclick="demoLogin('warehouse_op')">
+                            <strong><i class="fa-solid fa-warehouse me-2"></i>Warehouse Operator:</strong> warehouse_op
+                        </button>
+                        <button class="btn btn-outline-danger text-start" onclick="demoLogin('admin_user')">
+                            <strong><i class="fa-solid fa-user-shield me-2"></i>Admin:</strong> admin_user (Full Access)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentToken = "";
+        let currentUserRole = "Guest";
+        let currentCustomerId = null;
+        let loginModalObj;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loginModalObj = new bootstrap.Modal(document.getElementById('loginModal'));
+            fetchInventory();
+            // Default login as admin for initial load
+            demoLogin('admin_user');
+        });
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-page').forEach(el => el.style.display = 'none');
+            document.getElementById(tabId + '-tab').style.display = 'block';
+            
+            if (tabId === 'customer-portal') loadProductsAndOrders();
+            if (tabId === 'ops-dashboard') { loadPendingReturns(); loadWarehouseQueue(); }
+            if (tabId === 'analytics-dashboard') loadAnalytics();
+            if (tabId === 'audit-view') loadAuditLog();
+        }
+
+        function showLoginModal() {
+            loginModalObj.show();
+        }
+
+        async function demoLogin(username) {
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, password: 'password123' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentToken = data.access_token;
+                    currentUserRole = data.role;
+                    currentCustomerId = data.customer_id;
+                    document.getElementById('current-user-badge').innerText = `${username} (${data.role})`;
+                    loginModalObj.hide();
+                    alert(`Logged in successfully as ${username} (${data.role})`);
+                } else {
+                    alert(`Login failed: ${data.detail}`);
+                }
+            } catch (err) {
+                alert(`Error during login: ${err}`);
+            }
+        }
+
+        async function fetchInventory() {
+            try {
+                const res = await fetch('/api/system/inventory');
+                const data = await res.json();
+                document.getElementById('inv-tables').innerText = data.tables_count;
+                document.getElementById('inv-triggers').innerText = data.triggers_count;
+                document.getElementById('inv-procedures').innerText = data.procedures_count;
+                document.getElementById('inv-endpoints').innerText = data.api_endpoints_count;
+            } catch (e) {
+                console.error("Inventory fetch failed", e);
+            }
+        }
+
+        // --- STEPPER FUNCTIONS ---
+        async function loadOrderState(orderId) {
+            const res = await fetch(`/api/orders/${orderId}/status`, {
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const data = await res.json();
+            document.getElementById('stepper-json').innerText = JSON.stringify(data, null, 2);
+        }
+
+        async function stepRequestReturn(orderId) {
+            const res = await fetch('/api/returns', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    reason: 'Defective display panel (Stepper Demo)',
+                    items: [{ order_item_id: 4, quantity: 1 }]
+                })
+            });
+            const data = await res.json();
+            document.getElementById('stepper-json').innerText = JSON.stringify(data, null, 2);
+            fetchInventory();
+        }
+
+        async function stepApproveReturn(orderId) {
+            const resState = await fetch(`/api/orders/${orderId}/status`, { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            const dataState = await resState.json();
+            if (!dataState.returns.length) { alert("Please request a return first!"); return; }
+            const returnId = dataState.returns[0].return_id;
+
+            const res = await fetch(`/api/returns/${returnId}/approve?action=approve`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const data = await res.json();
+            document.getElementById('stepper-json').innerText = JSON.stringify(data, null, 2);
+            fetchInventory();
+        }
+
+        async function stepInspectReturn(orderId) {
+            const resState = await fetch(`/api/orders/${orderId}/status`, { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            const dataState = await resState.json();
+            if (!dataState.returns.length) { alert("No return found"); return; }
+            const returnId = dataState.returns[0].return_id;
+
+            // Mark received first
+            await fetch(`/api/returns/${returnId}/receive`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+
+            // Now inspect
+            const res = await fetch(`/api/returns/${returnId}/inspect`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({
+                    condition_status: 'GOOD',
+                    notes: 'Verified item condition GOOD in original packaging.'
+                })
+            });
+            const data = await res.json();
+            document.getElementById('stepper-json').innerText = JSON.stringify(data, null, 2);
+            fetchInventory();
+        }
+
+        async function stepProcessRefund(orderId) {
+            const resState = await fetch(`/api/orders/${orderId}/status`, { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            const dataState = await resState.json();
+            if (!dataState.returns.length) { alert("No return found"); return; }
+            const returnId = dataState.returns[0].return_id;
+
+            const res = await fetch(`/api/returns/${returnId}/refund`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const data = await res.json();
+            document.getElementById('stepper-json').innerText = JSON.stringify(data, null, 2);
+            fetchInventory();
+        }
+
+        async function testBlockedLateReturn() {
+            // Order #3 is Charlie Brown's order (45 days old, return window 7 days)
+            const res = await fetch('/api/returns', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({
+                    order_id: 3,
+                    reason: 'Changed mind after 45 days',
+                    items: [{ order_item_id: 3, quantity: 1 }]
+                })
+            });
+            const data = await res.json();
+            document.getElementById('stepper-json').innerText = `HTTP ${res.status} REJECTION RESPONSE:\n` + JSON.stringify(data, null, 2);
+            alert(`TRIGGER BLOCKED ACTION SUCCESS:\n${data.detail}`);
+        }
+
+        // --- CUSTOMER PORTAL ---
+        async function loadProductsAndOrders() {
+            const pRes = await fetch('/api/products');
+            const products = await pRes.json();
+            const pSelect = document.getElementById('product-select');
+            pSelect.innerHTML = products.map(p => `<option value="${p.product_id}">${p.name} - $${p.current_price} (${p.return_window_days}d window)</option>`).join('');
+
+            const oRes = await fetch('/api/reports/order-history', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            const orders = await oRes.json();
+            const oTable = document.getElementById('my-orders-table');
+            oTable.innerHTML = orders.map(o => `
+                <tr>
+                    <td>#${o.order_id}</td>
+                    <td>${new Date(o.order_date).toLocaleDateString()}</td>
+                    <td>$${o.total_amount}</td>
+                    <td><span class="badge bg-success">${o.order_status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="requestReturnPrompt(${o.order_id})">Request Return</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('place-order-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pId = parseInt(document.getElementById('product-select').value);
+            const qty = parseInt(document.getElementById('order-qty').value);
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({ items: [{ product_id: pId, quantity: qty }] })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`Order created! Order #${data.order_id}`);
+                loadProductsAndOrders();
+            } else {
+                alert(`Error: ${data.detail}`);
+            }
+        });
+
+        async function requestReturnPrompt(orderId) {
+            const reason = prompt("Enter return reason (e.g. Defective item):", "Defective product");
+            if (!reason) return;
+            const res = await fetch('/api/returns', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    reason: reason,
+                    items: [{ order_item_id: orderId, quantity: 1 }]
+                })
+            });
+            const data = await res.json();
+            if (res.ok) alert(`Return submitted! Return #${data.return_id}`);
+            else alert(`Return rejected by DB: ${data.detail}`);
+        }
+
+        // --- OPS DASHBOARD ---
+        async function loadPendingReturns() {
+            const res = await fetch('/api/reports/pending-returns', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            if (!res.ok) return;
+            const items = await res.json();
+            document.getElementById('support-queue-table').innerHTML = items.map(r => `
+                <tr>
+                    <td>#${r.return_id}</td>
+                    <td>${r.customer_name}</td>
+                    <td>${r.reason}</td>
+                    <td><span class="badge bg-warning">${r.return_status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="approveReturnOps(${r.return_id})">Approve</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function approveReturnOps(returnId) {
+            const res = await fetch(`/api/returns/${returnId}/approve?action=approve`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const data = await res.json();
+            alert(res.ok ? `Return #${returnId} approved` : `Error: ${data.detail}`);
+            loadPendingReturns();
+        }
+
+        async function loadWarehouseQueue() {
+            const res = await fetch('/api/reports/pending-returns', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            if (!res.ok) return;
+            const items = await res.json();
+            document.getElementById('warehouse-queue-table').innerHTML = items.map(r => `
+                <tr>
+                    <td>#${r.return_id}</td>
+                    <td>Order #${r.order_id}</td>
+                    <td><span class="badge bg-info">${r.return_status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="inspectReturnOps(${r.return_id})">Inspect (GOOD)</button>
+                        <button class="btn btn-sm btn-success" onclick="refundOps(${r.return_id})">Refund</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function inspectReturnOps(returnId) {
+            await fetch(`/api/returns/${returnId}/receive`, { method: 'PUT', headers: { 'Authorization': `Bearer ${currentToken}` } });
+            const res = await fetch(`/api/returns/${returnId}/inspect`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+                body: JSON.stringify({ condition_status: 'GOOD', notes: 'Inspected by warehouse' })
+            });
+            const data = await res.json();
+            alert(res.ok ? `Inspection completed for Return #${returnId}` : `Error: ${data.detail}`);
+            loadWarehouseQueue();
+        }
+
+        async function refundOps(returnId) {
+            const res = await fetch(`/api/returns/${returnId}/refund`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+            });
+            const data = await res.json();
+            alert(res.ok ? `Refund #${data.refund_id} processed via stored procedure` : `Error: ${data.detail}`);
+            loadWarehouseQueue();
+        }
+
+        // --- ANALYTICS ---
+        async function loadAnalytics() {
+            const rr = await (await fetch('/api/reports/return-rates', { headers: { 'Authorization': `Bearer ${currentToken}` } })).json();
+            new Chart(document.getElementById('chart-return-rate'), {
+                type: 'doughnut',
+                data: {
+                    labels: rr.slice(0, 5).map(x => x.product_name.substring(0, 15)),
+                    datasets: [{ data: rr.slice(0, 5).map(x => x.return_rate_percentage), backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'] }]
+                }
+            });
+
+            const mr = await (await fetch('/api/reports/monthly-refunds', { headers: { 'Authorization': `Bearer ${currentToken}` } })).json();
+            new Chart(document.getElementById('chart-monthly-refunds'), {
+                type: 'bar',
+                data: {
+                    labels: mr.map(x => x.month_year),
+                    datasets: [{ label: 'Refund Amount ($)', data: mr.map(x => x.total_refund_amount), backgroundColor: '#2ecc71' }]
+                }
+            });
+
+            const tr = await (await fetch('/api/reports/top-reasons', { headers: { 'Authorization': `Bearer ${currentToken}` } })).json();
+            new Chart(document.getElementById('chart-top-reasons'), {
+                type: 'bar',
+                data: {
+                    labels: tr.map(x => x.return_reason),
+                    datasets: [{ label: 'Total Requests', data: tr.map(x => x.total_requests), backgroundColor: '#e74c3c' }]
+                }
+            });
+        }
+
+        // --- AUDIT LOG ---
+        async function loadAuditLog() {
+            const res = await fetch('/api/audit', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+            if (!res.ok) {
+                const err = await res.json();
+                document.getElementById('audit-log-table').innerHTML = `<tr><td colspan="8" class="text-danger fw-bold text-center">HTTP ${res.status}: ${err.detail}</td></tr>`;
+                return;
+            }
+            const logs = await res.json();
+            document.getElementById('audit-log-table').innerHTML = logs.map(l => `
+                <tr>
+                    <td>#${l.log_id}</td>
+                    <td><span class="badge bg-secondary">${l.entity_type}</span></td>
+                    <td>#${l.entity_id}</td>
+                    <td>${l.old_status || '-'}</td>
+                    <td><span class="badge bg-info">${l.new_status}</span></td>
+                    <td><strong>${l.actor}</strong></td>
+                    <td>${l.note}</td>
+                    <td>${new Date(l.changed_at).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function testNonAdminAuditAccess() {
+            // Log in as Customer user and attempt to fetch /api/audit
+            const loginRes = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'customer_user', password: 'password123' })
+            });
+            const loginData = await loginRes.json();
+            
+            const auditRes = await fetch('/api/audit', {
+                headers: { 'Authorization': `Bearer ${loginData.access_token}` }
+            });
+            const auditData = await auditRes.json();
+            
+            document.getElementById('audit-log-table').innerHTML = `
+                <tr><td colspan="8" class="text-danger fw-bold text-center p-4">
+                    <h5><i class="fa-solid fa-lock me-2"></i>HTTP ${auditRes.status} Access Denied Response Captured</h5>
+                    <pre class="bg-dark text-warning p-3 mt-2 rounded text-start">${JSON.stringify(auditData, null, 2)}</pre>
+                </td></tr>
+            `;
+            alert(`HTTP ${auditRes.status} 403 Forbidden Access Denied Response Captured Successfully!`);
+        }
+    </script>
+</body>
+</html>

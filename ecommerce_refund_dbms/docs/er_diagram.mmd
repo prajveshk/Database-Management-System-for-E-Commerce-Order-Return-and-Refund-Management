@@ -1,0 +1,121 @@
+erDiagram
+    Role ||--o{ AppUser : "assigns"
+    Customer ||--o{ AppUser : "authenticates"
+    Customer ||--o{ Orders : "places"
+    Customer ||--o{ ReturnRequest : "submits"
+    Product ||--o{ Inventory : "tracks"
+    Product ||--o{ OrderItem : "contains"
+    Orders ||--o{ OrderItem : "includes"
+    Orders ||--o{ Payment : "settles"
+    Orders ||--o{ ReturnRequest : "generates"
+    OrderItem ||--o{ ReturnItem : "returns"
+    ReturnRequest ||--o{ ReturnItem : "includes"
+    ReturnRequest ||--|| Inspection : "undergoes (1:1)"
+    ReturnRequest ||--o{ Refund : "triggers (1:N)"
+    Payment ||--o{ Refund : "credits"
+
+    Role {
+        int role_id PK
+        string role_name UK
+    }
+
+    Customer {
+        int customer_id PK
+        string name
+        string email UK
+        string phone
+        timestamp created_at
+    }
+
+    AppUser {
+        int user_id PK
+        string username UK
+        string password_hash
+        int role_id FK
+        int customer_id FK
+    }
+
+    Product {
+        int product_id PK
+        string name
+        decimal current_price
+        int return_window_days
+    }
+
+    Inventory {
+        int inventory_id PK
+        int product_id FK
+        string serial_or_sku UK
+        enum status
+        timestamp updated_at
+    }
+
+    Orders {
+        int order_id PK
+        int customer_id FK
+        timestamp order_date
+        decimal total_amount
+        enum order_status
+    }
+
+    OrderItem {
+        int order_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price_at_purchase
+    }
+
+    Payment {
+        int payment_id PK
+        int order_id FK
+        string provider_reference UK
+        decimal amount
+        enum payment_status
+    }
+
+    ReturnRequest {
+        int return_id PK
+        int order_id FK
+        int customer_id FK
+        string reason
+        enum return_status
+        timestamp requested_at
+        timestamp inspected_at
+    }
+
+    ReturnItem {
+        int return_item_id PK
+        int return_id FK
+        int order_item_id FK
+        int quantity
+    }
+
+    Inspection {
+        int inspection_id PK
+        int return_id FK_UK
+        string inspector
+        enum condition_status
+        string notes
+        timestamp inspected_at
+    }
+
+    Refund {
+        int refund_id PK
+        int return_id FK
+        int payment_id FK
+        decimal amount
+        enum refund_status
+        timestamp processed_at
+    }
+
+    AuditLog {
+        int log_id PK
+        string entity_type
+        int entity_id
+        string old_status
+        string new_status
+        string actor
+        string note
+        timestamp changed_at
+    }

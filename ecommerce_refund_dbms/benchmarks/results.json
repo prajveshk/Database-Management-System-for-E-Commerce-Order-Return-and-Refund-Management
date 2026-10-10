@@ -1,0 +1,113 @@
+{
+  "results": {
+    "1K": {
+      "pending_returns": {
+        "indexed": 0.22,
+        "unindexed": 0.32
+      },
+      "order_history": {
+        "indexed": 5.98,
+        "unindexed": 4.86
+      },
+      "refund_status": {
+        "indexed": 4.96,
+        "unindexed": 4.48
+      }
+    },
+    "10K": {
+      "pending_returns": {
+        "indexed": 0.55,
+        "unindexed": 0.61
+      },
+      "order_history": {
+        "indexed": 54.1,
+        "unindexed": 50.67
+      },
+      "refund_status": {
+        "indexed": 53.4,
+        "unindexed": 44.91
+      }
+    },
+    "100K": {
+      "pending_returns": {
+        "indexed": 2.95,
+        "unindexed": 2.59
+      },
+      "order_history": {
+        "indexed": 692.29,
+        "unindexed": 584.52
+      },
+      "refund_status": {
+        "indexed": 601.94,
+        "unindexed": 597.84
+      }
+    }
+  },
+  "refund_median_ms": 1.23,
+  "refund_avg_ms": 1.35,
+  "backup_passed": true,
+  "pre_rows": 111025,
+  "post_rows": 111025,
+  "explain_data": {
+    "indexed": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "rr",
+        "partitions": null,
+        "type": "ALL",
+        "possible_keys": "idx_return_customer_id,idx_return_status",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": 128,
+        "filtered": 69.53,
+        "Extra": "Using where"
+      },
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "c",
+        "partitions": null,
+        "type": "eq_ref",
+        "possible_keys": "PRIMARY",
+        "key": "PRIMARY",
+        "key_len": "4",
+        "ref": "ecommerce_db.rr.customer_id",
+        "rows": 1,
+        "filtered": 100.0,
+        "Extra": null
+      }
+    ],
+    "unindexed": [
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "rr",
+        "partitions": null,
+        "type": "ALL",
+        "possible_keys": "idx_return_customer_id",
+        "key": null,
+        "key_len": null,
+        "ref": null,
+        "rows": 2,
+        "filtered": 50.0,
+        "Extra": "Using where"
+      },
+      {
+        "id": 1,
+        "select_type": "SIMPLE",
+        "table": "c",
+        "partitions": null,
+        "type": "eq_ref",
+        "possible_keys": "PRIMARY",
+        "key": "PRIMARY",
+        "key_len": "4",
+        "ref": "ecommerce_db.rr.customer_id",
+        "rows": 1,
+        "filtered": 100.0,
+        "Extra": null
+      }
+    ]
+  }
+}
