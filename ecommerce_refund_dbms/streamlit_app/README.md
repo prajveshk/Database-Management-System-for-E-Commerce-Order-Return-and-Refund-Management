@@ -6,8 +6,9 @@ It connects **directly to MySQL 8** with parameterized SQL
 limits, state machine, audit trail, atomic refunds) are enforced inside
 the database by triggers and `sp_process_refund`.
 
-The existing FastAPI service (`backend/`) is retained as the automated
-test and benchmark harness (pytest + benchmarks target its REST API).
+The Streamlit app is the project's sole application layer. All business rules (return window, quantity
+limits, state machine, audit trail, atomic refunds) are enforced inside
+the database by triggers and `sp_process_refund`.
 
 ## Run
 

@@ -1,0 +1,15 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local MySQL data dir churn (binary, environment-specific)
+# NOTE: mysqldata/ is already tracked historically; new changes to it are
+# intentionally left uncommitted (live server files). Uncomment to ignore:
+# ecommerce_refund_dbms/mysqldata/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

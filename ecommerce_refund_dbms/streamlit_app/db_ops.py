@@ -12,9 +12,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import mysql.connector  # noqa: E402
-from backend.database import get_db_connection  # noqa: E402
-from backend.auth import verify_password  # noqa: E402
-from backend.payment_gateway import MockPaymentGateway  # noqa: E402
+from streamlit_app.database import get_db_connection  # noqa: E402
+from streamlit_app.auth import verify_password  # noqa: E402
+from streamlit_app.payment_gateway import MockPaymentGateway  # noqa: E402
 
 
 class AppError(Exception):

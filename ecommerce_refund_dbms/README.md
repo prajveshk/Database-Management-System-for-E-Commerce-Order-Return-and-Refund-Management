@@ -1,35 +1,24 @@
 # Design and Implementation of a Database Management System for E-Commerce Order, Return and Refund Management
 
-A complete B.Tech AI & ML Database Systems Capstone Project (3-Stage Review Ready) implementing an ACID-compliant MySQL 8 3NF database schema, database-enforced integrity triggers, stored procedures with atomic transactions and rollback handlers, REST API backend, and interactive web dashboard.
+A complete B.Tech AI & ML Database Systems Capstone Project (3-Stage Review Ready) implementing an ACID-compliant MySQL 8 3NF database schema, database-enforced integrity triggers, stored procedures with atomic transactions and rollback handlers, and a role-based Streamlit application with direct database connectivity.
 
 ---
 
 ## 1. Quick Start & Setup
 
 ### Prerequisites
-- Python 3.11+
-- MySQL Server 8.0 (or Docker Compose)
+- Python 3.11+ (`pip install streamlit mysql-connector-python bcrypt pandas`)
+- MySQL Server 8.0 on 127.0.0.1:3307 with seeded `ecommerce_db`
 
 ### One-Command Setup (Local MySQL)
 ```bash
 # 1. Initialize MySQL schema, triggers, procedures, indexes & demo seed data
 python db/seed.py
 
-# 2a. Launch Streamlit App (primary application UI)
+# 2. Launch Streamlit App
 streamlit run streamlit_app/app.py --server.port 8501
 ```
 Open your browser at: `http://127.0.0.1:8501`
-
-### Alternative: FastAPI Backend + Legacy Dashboard (test/benchmark harness)
-```bash
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-Open your browser at: `http://127.0.0.1:8000`
-
-### Docker Compose Deployment
-```bash
-docker compose up --build
-```
 
 ---
 
@@ -42,7 +31,7 @@ The system includes pre-seeded demo accounts for all 4 RBAC system roles (Passwo
 | **Customer** | `customer_user` | `password123` | Place orders, view my orders, request returns (Alice Smith). |
 | **Support Agent** | `support_agent` | `password123` | View pending returns, approve/reject return requests, trigger refunds. |
 | **Warehouse Op** | `warehouse_op` | `password123` | Receive returned packages, inspect item condition (GOOD/DAMAGED/DEFECTIVE). |
-| **Admin** | `admin_user` | `password123` | Full system access + view audit log (`/api/audit`). |
+| **Admin** | `admin_user` | `password123` | Full system access + Audit Log viewer + guided lifecycle demo. |
 
 ---
 
@@ -50,9 +39,9 @@ The system includes pre-seeded demo accounts for all 4 RBAC system roles (Passwo
 
 ### Execute Pytest Automated Test Suite
 ```bash
-python -m pytest tests/test_suite.py tests/test_streamlit_ops.py -v
+python -m pytest tests/test_streamlit_ops.py -v
 ```
-*Runs 13 automated tests (9 API: CHECK constraints, foreign key restrictions, stored procedure logic, full lifecycle integration, error rollback, and thread concurrency; + 4 Streamlit ops: auth/RBAC, db_ops lifecycle, guards, catalogue/analytics sanity).*
+*Runs 10 automated tests (TC-01–TC-10: CHECK/UNIQUE/ENUM/FK constraints, procedure state guard, full db_ops lifecycle, atomic rollback, late/duplicate guards, auth/RBAC).*
 
 ### Execute Performance & Disaster Recovery Benchmarks
 ```bash
@@ -66,19 +55,13 @@ python benchmarks/run_benchmarks.py
 
 ```
 +-----------------------------------------------------------------------------------+
-|                                CLIENT LAYER                                       |
-|   Customer Portal   |   Operations Dashboard   |   Demo Lifecycle Stepper (7 States)  |
+|                             APPLICATION LAYER                                     |
+|   Streamlit App: Customer Portal | Operations | Refunds | Analytics | Audit | Demo  |
+|   Session-state RBAC (bcrypt)          Mocked Payment Gateway                      |
 +-----------------------------------------------------------------------------------+
-                                         │
-                                 HTTP REST API / JSON
-                                         ▼
-+-----------------------------------------------------------------------------------+
-|                                SERVICE LAYER                                      |
-|    Streamlit App (direct parameterized SQL) + FastAPI REST harness   |   Session/JWT Auth & RBAC   |   Mocked Payment Gateway        |
-+-----------------------------------------------------------------------------------+
-                                         │
-                                   Parameterized SQL
-                                         ▼
+                                          │
+                                    Parameterized SQL
+                                          ▼
 +-----------------------------------------------------------------------------------+
 |                                 DATA LAYER                                        |
 |                           MySQL 8 InnoDB DBMS (3NF)                               |

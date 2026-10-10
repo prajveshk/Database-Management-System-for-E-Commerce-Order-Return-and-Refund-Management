@@ -3,8 +3,7 @@
 **Degree Program:** B.Tech Artificial Intelligence & Machine Learning  
 **Subject:** Database Management Systems (DBMS) Final Project  
 **Engine:** MySQL 8.0.46 (InnoDB Engine, ACID Compliant)  
-**Backend:** Python 3.13 + FastAPI  
-**Frontend:** Responsive Vanilla HTML5/CSS3/JS Single Page Application  
+**App:** Python 3.13 + Streamlit 1.65 (direct parameterized SQL, session-state RBAC)  
 
 ---
 
@@ -15,28 +14,28 @@
 | **Relational Tables (3NF)** | **13** | `Role`, `AppUser`, `Customer`, `Product`, `Inventory`, `Orders`, `OrderItem`, `Payment`, `ReturnRequest`, `ReturnItem`, `Inspection`, `Refund`, `AuditLog` ([schema.sql](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/db/schema.sql)) |
 | **Database Triggers** | **5** | Return window validation, Return quantity validation, Invalid state transition check (FIX 01), Return audit log, Refund audit log ([triggers.sql](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/db/triggers.sql)) |
 | **Stored Procedures** | **1** | `sp_process_refund`: Atomic transaction with exit handler rollback (FIX 03) and duplicate refund prevention (FIX 02) ([procedures.sql](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/db/procedures.sql)) |
-| **REST API Endpoints** | **17** | Auth, Orders, Returns, Approval, Receiving, Inspection, Refunds, Audit, Analytics, System Inventory — retained as automated test/benchmark harness ([main.py](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/backend/main.py)) |
 | **Streamlit App Pages** | **6** | Sidebar login + session-state RBAC; Customer Portal; Operations; Refunds; Analytics; Audit Log (Admin); Lifecycle Demo stepper (`streamlit_app/app.py` + `streamlit_app/db_ops.py` with direct parameterized SQL) |
 
 ---
 
 ## 2. Automated Test Suite Results
 
-The system was evaluated against 13 automated test cases (9 API + 4 Streamlit ops) covering constraints, unit procedure logic, full integration API flow, Streamlit data-layer lifecycle, error rollback, and concurrent execution.
+The system was evaluated against 10 automated pytest cases (TC-01–TC-10, `tests/test_streamlit_ops.py`) covering engine constraints, procedure guards, the full db_ops lifecycle, atomic rollback, duplicate/late-return guards, and auth/RBAC.
 
 | Category | Test Case | Result | Empirical Result & Verification Details |
 | :--- | :--- | :---: | :--- |
-| **Constraint** | `test_constraint_invalid_quantity` | **PASSED** | Engine blocked `quantity = 0` via `CHECK (quantity > 0)`. |
-| **Constraint** | `test_constraint_negative_amount` | **PASSED** | Engine blocked `total_amount = -50.00` via `CHECK (total_amount >= 0)`. |
-| **Constraint** | `test_constraint_duplicate_provider_reference` | **PASSED** | Engine blocked duplicate `provider_reference` via `UNIQUE` constraint. |
-| **Constraint** | `test_constraint_bad_status_enum` | **PASSED** | Engine blocked invalid status `'SuperStatus'` via `ENUM` status domain. |
-| **Constraint** | `test_constraint_fk_restrict` | **PASSED** | Engine blocked `DELETE FROM Customer` via `ON DELETE RESTRICT`. |
-| **Unit** | `test_unit_sp_process_refund_validation` | **PASSED** | Stored procedure `sp_process_refund` rejected return not in `'Inspected'` state. |
-| **Integration** | `test_integration_full_lifecycle` | **PASSED** | Full end-to-end API lifecycle: Order -> Return -> Approve -> Receive -> Inspect -> Refund. |
-| **Failure / Rollback** | `test_failure_rollback_on_procedure_error` | **PASSED** | SQLEXCEPTION handler triggered `ROLLBACK` on error; no orphan records created (FIX 03). |
-| **Concurrency** | `test_concurrency_duplicate_refund_attempts` | **PASSED** | Competing parallel threads; exactly 1 succeeded (200 OK) and 1 failed (400 Bad Request) (FIX 02). |
+| **Constraint** | `test_tc01_invalid_quantity_blocked` | **PASSED** | Engine blocked `quantity = 0` via `CHECK (quantity > 0)`. |
+| **Constraint** | `test_tc02_negative_amount_blocked` | **PASSED** | Engine blocked `total_amount = -50.00` via `CHECK (total_amount >= 0)`. |
+| **Constraint** | `test_tc03_duplicate_provider_reference_blocked` | **PASSED** | Engine blocked duplicate `provider_reference` via `UNIQUE` constraint. |
+| **Constraint** | `test_tc04_bad_status_enum_blocked` | **PASSED** | Engine blocked invalid status `'SuperStatus'` via `ENUM` status domain. |
+| **Constraint** | `test_tc05_fk_restrict_blocked` | **PASSED** | Engine blocked `DELETE FROM Customer` via `ON DELETE RESTRICT`. |
+| **Guard** | `test_tc06_refund_requires_inspected_state` | **PASSED** | Stored procedure `sp_process_refund` rejected return not in `'Inspected'` state. |
+| **Lifecycle** | `test_tc07_full_lifecycle_via_db_ops` | **PASSED** | Full db_ops lifecycle: Order -> Requested -> Approved -> Received -> Inspected -> Refunded, with audit entries. |
+| **Rollback** | `test_tc08_rollback_on_procedure_error` | **PASSED** | Failed refund left zero orphan `Refund` rows (atomic rollback). |
+| **Guards** | `test_tc09_duplicate_refund_blocked` | **PASSED** | Late return (order 3) blocked by window trigger; second refund rejected as duplicate. |
+| **Auth** | `test_tc10_auth_and_rbac` | **PASSED** | bcrypt login resolves all 4 RBAC roles; wrong password rejected. |
 
-**Overall Test Result:** 13 / 13 Passed (100% Pass Rate). See [test_report.md](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/docs/test_report.md).
+**Overall Test Result:** 10 / 10 Passed (100% Pass Rate). See [test_report.md](file:///C:/Users/Prajvesh/.gemini/antigravity/scratch/ecommerce_refund_dbms/docs/test_report.md).
 
 ---
 
@@ -86,13 +85,12 @@ Measurements were taken using high-precision performance counters across 5 runs 
 
 ## 5. Visual Screenshots & Artifact Index
 
-All generated presentation figures reside in `docs/screenshots/`:
-1. `customer_portal.png`: Customer portal interface for placing orders and requesting returns.
-2. `ops_dashboard.png`: Support queue and warehouse inspection queue.
-3. `api_flow.png`: End-to-End Demo Lifecycle Stepper (7 States live inspector).
-4. `access_denied_403.png`: HTTP 403 Access Denied response for non-admin user on `/api/audit`.
-5. `audit_log.png`: Immutable Audit Log viewer (Admin role).
-6. `analytics_dashboard.png`: Analytics dashboard with return rates, monthly refunds, top reasons.
-7. `blocked_late_return.png`: Trigger rejection alert for late return outside return window.
-8. `test_run_output.png`: Pytest automated suite run output (9/9 Passed).
-9. `benchmark_chart.png`: Query latency benchmark chart (1K, 10K, 100K).
+All generated presentation figures reside in `docs/screenshots/` (Streamlit app):
+1. `st_customer_portal.png`: Customer portal — catalogue, order form, status tracker, return request.
+2. `st_ops_dashboard.png`: Operations queue — approve/reject, receive, inspection.
+3. `st_lifecycle.png`: Guided 7-state lifecycle demo stepper.
+4. `st_audit_log.png`: Immutable Audit Log viewer (Admin role).
+5. `st_analytics.png`: Analytics dashboard with metrics, charts, top reasons.
+6. `st_blocked_return.png`: Trigger rejection message for late return outside return window.
+7. `test_run_output.png`: Pytest automated suite run output (10/10 Passed).
+8. `benchmark_chart.png`: Query latency benchmark chart (1K, 10K, 100K).

@@ -1,6 +1,8 @@
-import mysql.connector
-from mysql.connector import pooling
+"""MySQL connection pool for the Streamlit application (self-contained)."""
 import os
+
+import mysql.connector  # noqa: E402
+from mysql.connector import pooling  # noqa: E402
 
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', '127.0.0.1'),
@@ -15,11 +17,13 @@ DB_CONFIG = {
 
 pool = None
 
+
 def get_db_pool():
     global pool
     if pool is None:
         pool = pooling.MySQLConnectionPool(**DB_CONFIG)
     return pool
+
 
 def get_db_connection():
     return get_db_pool().get_connection()
